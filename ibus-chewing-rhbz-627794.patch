@@ -1,0 +1,11 @@
+diff -up ./data/chewing.xml.in.orig ./data/chewing.xml.in
+--- ./data/chewing.xml.in.orig	2011-02-01 15:42:29.378184812 +1000
++++ ./data/chewing.xml.in	2011-02-01 15:43:01.817122128 +1000
+@@ -19,6 +19,7 @@
+ 	    <author>Peng Huang, Ding-Yi Chen</author>
+             <icon>@PROJECT_DATADIR@/icons/@PROJECT_NAME@.png</icon>
+ 	    <layout>us</layout>
++	    <rank>80</rank>
+         </engine>
+     </engines>
+ </component>

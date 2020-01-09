@@ -1,12 +1,14 @@
 Name:       ibus-chewing
 Version:    1.3.5.20100714
-Release:    1%{?dist}
+Release:    4%{?dist}
 Summary:    The Chewing engine for IBus input platform
 Summary(zh_TW): IBus新酷音輸入法
 License:    GPLv2+
 Group:      System Environment/Libraries
 URL:        http://code.google.com/p/ibus/
 Source0:    http://ibus.googlecode.com/files/%{name}-%{version}-Source.tar.gz
+Source1:    USER-GUIDE
+Patch0:     %{name}-rhbz-627794.patch
 
 BuildRoot:  %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
@@ -49,6 +51,9 @@ IBus-chewing 是新酷音輸入法的IBus前端。
 
 %prep
 %setup -q -n %{name}-%{version}-Source
+%__cp %{SOURCE1} .
+%patch0 -p0 -b .rhbz-627794
+
 
 %build
 # $RPM_OPT_FLAGS should be  loaded from cmake macro.
@@ -89,14 +94,22 @@ fi
 
 %files -f %{name}.lang
 %defattr(-,root,root,-)
-%doc AUTHORS README ChangeLog NEWS COPYING
+%doc AUTHORS README ChangeLog NEWS COPYING USER-GUIDE
 %{_libexecdir}/ibus-engine-chewing
 %{_datadir}/%{name}
 %{_datadir}/ibus/component/chewing.xml
 %config(noreplace) %{_sysconfdir}/gconf/schemas/%{name}.schemas
 
 %changelog
-* Wed Jul 14 2010 Ding-Yi Chen <dchen at redhat.com> - 1.3.5.20100714-1
+* Fri Feb 11 2011 Ding-Yi Chen <dchen at redhat.com> - 1.3.5.20100714-4
+- Resolves: #627794
+- Repack with the original 1.3.5.20100714 source to address the rpmdiff.
+
+* Tue Feb 01 2011 Ding-Yi Chen <dchen at redhat.com> - 1.3.5.20100714-3
+- Resolves: #627794
+- Add USER-GUIDE
+
+* Tue Feb 01 2011 Ding-Yi Chen <dchen at redhat.com> - 1.3.5.20100714-1
 - Resolves: #608991
 - Removes Ctrl-v/V Hotkey
 
