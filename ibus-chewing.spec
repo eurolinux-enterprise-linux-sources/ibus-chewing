@@ -1,15 +1,13 @@
 Name:           ibus-chewing
 Version:        1.4.4
-Release:        14%{?dist}
+Release:        8%{?dist}
+Summary:        The Chewing engine for IBus input platform
 Summary:        The Chewing engine for IBus input platform
 License:        GPLv2+
 Group:          System Environment/Libraries
 URL:            http://code.google.com/p/ibus/
 Source0:        http://ibus.googlecode.com/files/%{name}-%{version}-Source.tar.gz
 Patch0:         ibus-chewing-1.4.4-1.4.7.patch
-Patch1:         ibus-chewing-1.4.4.rhbz1119963.patch
-Patch2:         ibus-chewing-1.4.4.rhbz1062133.patch
-Patch3:         ibus-chewing-1.4.4.rhbz1073797.patch
 
 BuildRequires:  cmake >= 2.6.2
 BuildRequires:  gob2 >= 2.0.16
@@ -53,9 +51,6 @@ IBus-chewing 是新酷音輸入法的IBus前端。
 %prep
 %setup -q -n %{name}-%{version}-Source
 %patch0 -p1 -b .1.4.7
-%patch1 -p0 -b .rhbz1119963
-%patch2 -p0 -b .rhbz1062133
-%patch3 -p0 -b .rhbz1073797
 
 %build
 # $RPM_OPT_FLAGS should be loaded from cmake macro.
@@ -119,18 +114,6 @@ gconftool-2 --makefile-install-rule %{_sysconfdir}/gconf/schemas/%{name}.schemas
 %{_datadir}/%{name}/icons
 
 %changelog
-* Thu Dec 18 2014 Ding-Yi Chen <dchen at redhat.com> - 1.4.4-14
-- Remove the multilib fix, as ibus-chewing is unlikely required
-  multilib installation.
-
-* Thu Dec 18 2014 Ding-Yi Chen <dchen at redhat.com> - 1.4.4-13
-- Fix the multilib mo conflict.
-
-* Wed Dec 17 2014 Ding-Yi Chen <dchen at redhat.com> - 1.4.4-9
-- Resolves Bug 1119963 - Slow focus change with ibus-chewing
-- Resolves Bug 1062133 - ibus-chewing may not handle key event after focus change
-- Resolves Bug 1073797 - Cannot identify input mode for Chinese IME (ibus-chewing)
-
 * Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 1.4.4-8
 - Mass rebuild 2014-01-24
 
