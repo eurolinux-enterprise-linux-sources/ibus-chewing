@@ -1,32 +1,36 @@
-%global message_level 6
-Name:       ibus-chewing
-Version:    1.4.3
-Release:    3%{?dist}
-Summary:    The Chewing engine for IBus input platform
-Summary(zh_TW): IBus新酷音輸入法
-License:    GPLv2+
-Group:      System Environment/Libraries
-URL:        http://code.google.com/p/ibus/
-Source0:    http://ibus.googlecode.com/files/%{name}-%{version}-Source.tar.gz
-# http://code.google.com/p/ibus/issues/detail?id=1597
-Patch0:     %{name}-1.4.3-cflags.patch
+Name:           ibus-chewing
+Version:        1.4.4
+Release:        14%{?dist}
+Summary:        The Chewing engine for IBus input platform
+License:        GPLv2+
+Group:          System Environment/Libraries
+URL:            http://code.google.com/p/ibus/
+Source0:        http://ibus.googlecode.com/files/%{name}-%{version}-Source.tar.gz
+Patch0:         ibus-chewing-1.4.4-1.4.7.patch
+Patch1:         ibus-chewing-1.4.4.rhbz1119963.patch
+Patch2:         ibus-chewing-1.4.4.rhbz1062133.patch
+Patch3:         ibus-chewing-1.4.4.rhbz1073797.patch
 
-BuildRequires:  gettext-devel
+BuildRequires:  cmake >= 2.6.2
+BuildRequires:  gob2 >= 2.0.16
+BuildRequires:  pkgconfig
 BuildRequires:  gtk2-devel
 BuildRequires:  ibus-devel >= 1.3
-BuildRequires:  cmake >= 2.6.2
-
-# Make sure gob2 is patched against https://bugzilla.redhat.com/show_bug.cgi?id=519108
-BuildRequires:  gob2 >= 2.0.16-4
 BuildRequires:  libchewing-devel >= 0.3.3
-BuildRequires:  pkgconfig
-BuildRequires:  GConf2-devel
+BuildRequires:  libX11-devel
 BuildRequires:  libXtst-devel
-Requires:   ibus >= 1.3
-Requires:  libchewing >= 0.3.3
-Requires(pre): GConf2
+BuildRequires:  gettext-devel
+BuildRequires:  GConf2-devel
+Requires:       GConf2
+Requires:       gtk2
+Requires:       ibus >= 1.3
+Requires:       libchewing >= 0.3.3
+Requires(pre):  GConf2
 Requires(post): GConf2
-Requires(preun): GConf2
+Requires(preun):GConf2
+
+BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
+
 
 %description
 IBus-chewing is an IBus front-end of Chewing, an intelligent Chinese input
@@ -44,26 +48,29 @@ IBus-chewing 是新酷音輸入法的IBus前端。
 
 本輸入法也同時支援帶調漢語拼音輸入。
 
+
+
 %prep
 %setup -q -n %{name}-%{version}-Source
-%patch0 -p1
+%patch0 -p1 -b .1.4.7
+%patch1 -p0 -b .rhbz1119963
+%patch2 -p0 -b .rhbz1062133
+%patch3 -p0 -b .rhbz1073797
 
 %build
 # $RPM_OPT_FLAGS should be loaded from cmake macro.
-
-%if 0%{?rhel} <= 6
-%cmake -DMANAGE_MESSAGE_LEVEL=%{message_level} -DCMAKE_FEDORA_ENABLE_FEDORA_BUILD=1 -DGNOME_SHELL=0 .
-%else
-%cmake -DMANAGE_MESSAGE_LEVEL=%{message_level} -DCMAKE_FEDORA_ENABLE_FEDORA_BUILD=1 .
-%endif
-%__make VERBOSE=1  %{?_smp_mflags}
+%cmake -DCMAKE_FEDORA_ENABLE_FEDORA_BUILD=1 .
+make VERBOSE=1 %{?_smp_mflags}
+make VERBOSE=1 translations
 
 %install
-%__make install DESTDIR=%{buildroot}
-# We install document using %doc
-(cd %{buildroot}//usr/share/doc/ibus-chewing-1.4.3
- rm -rf RELEASE-NOTES.txt AUTHORS README ChangeLog COPYING USER-GUIDE
- )
+%__rm -rf %{buildroot}
+make install DESTDIR=%{buildroot}
+
+# We install document using doc 
+(cd %{buildroot}/usr/share/doc/%{name}-%{version}
+   rm -fr *
+)
 
 %find_lang %{name}
 
@@ -74,32 +81,97 @@ if [ "$1" -gt 1 ] ; then
     gconftool-2 --makefile-uninstall-rule %{_sysconfdir}/gconf/schemas/%{name}.schemas\
     >/dev/null || :
 
-# Upgrading 1.0.2.20090302-1.fc11 or older?
+    # Upgrading 1.0.2.20090302-1.fc11 or older?
     [ -r %{_sysconfdir}/gconf/schemas/%{name}.schema ] &&
     gconftool-2 --makefile-uninstall-rule %{_sysconfdir}/gconf/schemas/%{name}.schema\
-     >/dev/null || :
+    >/dev/null || :
 fi
+
+
+%preun
+if [ "$1" -eq 0 ] ; then
+    export GCONF_CONFIG_SOURCE=`gconftool-2 --get-default-source`
+    gconftool-2 --makefile-uninstall-rule %{_sysconfdir}/gconf/schemas/%{name}.schemas > /dev/null || :
+fi
+
 
 %post
 export GCONF_CONFIG_SOURCE=`gconftool-2 --get-default-source`
 gconftool-2 --makefile-install-rule %{_sysconfdir}/gconf/schemas/%{name}.schemas > /dev/null || :
+[ -x %{_bindir}/ibus ] && \
+  %{_bindir}/ibus write-cache --system &>/dev/null || :
 
-%preun
-if [ "$1" -eq 0 ] ; then
-export GCONF_CONFIG_SOURCE=`gconftool-2 --get-default-source`
-gconftool-2 --makefile-uninstall-rule %{_sysconfdir}/gconf/schemas/%{name}.schemas > /dev/null || :
-fi
+
+%postun
+[ -x %{_bindir}/ibus ] && \
+  %{_bindir}/ibus write-cache --system &>/dev/null || :
+
 
 %clean
 
 %files -f %{name}.lang
-%doc RELEASE-NOTES.txt AUTHORS README ChangeLog COPYING USER-GUIDE
+
+%defattr(-,root,root,-)
+%doc AUTHORS README ChangeLog COPYING USER-GUIDE
 %{_libexecdir}/ibus-engine-chewing
-%{_datadir}/%{name}
+%config %{_sysconfdir}/gconf/schemas/ibus-chewing.schemas
 %{_datadir}/ibus/component/chewing.xml
-%config(noreplace) %{_sysconfdir}/gconf/schemas/%{name}.schemas
+%{_datadir}/%{name}/icons
 
 %changelog
+* Thu Dec 18 2014 Ding-Yi Chen <dchen at redhat.com> - 1.4.4-14
+- Remove the multilib fix, as ibus-chewing is unlikely required
+  multilib installation.
+
+* Thu Dec 18 2014 Ding-Yi Chen <dchen at redhat.com> - 1.4.4-13
+- Fix the multilib mo conflict.
+
+* Wed Dec 17 2014 Ding-Yi Chen <dchen at redhat.com> - 1.4.4-9
+- Resolves Bug 1119963 - Slow focus change with ibus-chewing
+- Resolves Bug 1062133 - ibus-chewing may not handle key event after focus change
+- Resolves Bug 1073797 - Cannot identify input mode for Chinese IME (ibus-chewing)
+
+* Fri Jan 24 2014 Daniel Mach <dmach@redhat.com> - 1.4.4-8
+- Mass rebuild 2014-01-24
+
+* Fri Jan 17 2014 Ding-Yi Chen <dchen at redhat.com> - 1.4.4-7
+- Target "translation" is built separately with all, 
+  in order to tame multiple job make.
+- Resolves Bug 1013977 - ibus-chewing needs to have ibus write-cache --system in %post and %postun
+- Resolves Bug 1027031 - CVE-2013-4509 ibus-chewing: ibus: visible password entry flaw [rhel-7.0]
+- Resolves Bug 1028911 - [zh_TW]'Chinese<->English' switch does not work when clicking on the Chewing menu list.
+- Resolves Bug 1045868 - ibus-chewing *again* not built with $RPM_OPT_FLAGS
+- Option "Sync between caps lock and IM":
+  + Default of  is changed to "disable",  because the previous default
+    "keyboard" cause bug 1028911 for GNOME Shell.
+  + Now Sync from "input method" can control Caps LED in GNOME shell.
+- Translation added: de_DE, es_ES, it_IT, pt_BR, uk_UA
+- Set environment IBUS_CHEWING_LOGFILE for ibus-chewing log.
+
+* Fri Dec 27 2013 Daniel Mach <dmach@redhat.com> - 1.4.4-3
+- Mass rebuild 2013-12-27
+
+* Thu Dec 19 2013 Ding-Yi Chen <dchen at redhat.com> - 1.4.4-2
+- Resloves Bug 1027031 - CVE-2013-4509 ibus-chewing: ibus: visible password entry flaw [rhel-7.0]
+
+* Wed Dec 18 2013 Ding-Yi Chen <dchen at redhat.com> - 1.4.4-1
+- Resolves Bug 842856 - ibus-chewing 1.4.3-1 not built with $RPM_OPT_FLAGS
+- Resolves Bug 1027030 - CVE-2013-4509 ibus-chewing: ibus: visible 
+  password entry flaw [fedora-all]
+  Thanks czchen for the GitHub pull request 39.
+- Added translations: fr_FR, ja_JP, ko_KR
+- Adopt cmake-fedora-1.2.0
+* Wed Dec 18 2013 Ding-Yi Chen <dchen at redhat.com> - 1.4.4-1
+- Resolves Bug 842856 - ibus-chewing 1.4.3-1 not built with $RPM_OPT_FLAGS
+- Resolves Bug 1027030 - CVE-2013-4509 ibus-chewing: ibus: visible 
+  password entry flaw [fedora-all]
+  Thanks czchen for the GitHub pull request 39.
+- Added translations: fr_FR, ja_JP, ko_KR
+- Adopt cmake-fedora-1.2.0
+
+* Sat Aug 03 2013 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - 1.4.3-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_20_Mass_Rebuild
+
 * Wed Feb 20 2013 Ville Skyttä <ville.skytta@iki.fi> - 1.4.3-3
 - Build with $RPM_OPT_FLAGS (#842856).
 
@@ -342,7 +414,7 @@ behind when toggling ibus off- Use WM's revised ibus-chewing icon.
 - Hide ibus-chewing-panel when ibus-chewing is focus-out
 
 * Mon May 11 2009 Ding-Yi Chen <dchen at redhat.com> - 1.0.9.20090508-1
-  Now commit is forced when switch of ibus-chewing or current application loses focus.
+Now commit is forced when switch of ibus-chewing or current application loses focus.
 - New ibus-chewing.png is contribute by WM.
 - input-keyboard.png is no longer needed and removed.
 - ibus-engine-chewing -v option now need an integer as verbose level.
@@ -413,8 +485,9 @@ Fix the errors which Funda Wang as pointing out:
 * Tue Sep 16 2008 Huang Peng <shawn.p.huang@gmail.com> - 0.1.1.20080916-1
 - Update to 0.1.1.20080916.
 
-* Mon Sep 09 2008 Huang Peng <shawn.p.huang@gmail.com> - 0.1.1.20080901-1
+* Tue Sep 09 2008 Huang Peng <shawn.p.huang@gmail.com> - 0.1.1.20080901-1
 - Update to 0.1.1.20080901.
 
 * Fri Aug 15 2008 Huang Peng <shawn.p.huang@gmail.com> - 0.1.1.20081023-1
 - The first version.
+

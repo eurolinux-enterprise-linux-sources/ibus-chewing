@@ -1,0 +1,133 @@
+diff -up ./src/IBusChewingEngine.gob.rhbz1073797 ./src/IBusChewingEngine.gob
+--- ./src/IBusChewingEngine.gob.rhbz1073797	2014-12-17 15:26:02.863667940 +1000
++++ ./src/IBusChewingEngine.gob	2014-12-17 15:26:53.410442590 +1000
+@@ -212,7 +212,7 @@ class IBus:Chewing:Engine from IBus:Engi
+ 
+     public IBusProperty    *chieng_prop={
+         g_object_ref_sink (
+-            ibus_property_new("chewing_chieng_prop",PROP_TYPE_NORMAL,
++            ibus_property_new("InputMode",PROP_TYPE_NORMAL,
+ 		SELF_GET_CLASS(self)->chieng_prop_label_chi,
+ 		NULL, 
+ 		SELF_GET_CLASS(self)->chieng_prop_tooltip_chi,
+@@ -254,8 +254,12 @@ class IBus:Chewing:Engine from IBus:Engi
+ 
+     classwide IBusText *chieng_prop_label_chi={
+ 	g_object_ref_sink(ibus_text_new_from_static_string(_("Chi")))};
++    classwide IBusText *chieng_prop_symbol_chi={
++	g_object_ref_sink(ibus_text_new_from_static_string("中"))};
+     classwide IBusText *chieng_prop_label_eng={
+ 	g_object_ref_sink(ibus_text_new_from_static_string(_("Eng")))};
++    classwide IBusText *chieng_prop_symbol_eng={
++	g_object_ref_sink(ibus_text_new_from_static_string("英"))};
+     classwide IBusText *chieng_prop_tooltip_chi={
+ 	g_object_ref_sink(ibus_text_new_from_static_string(_("Click to switch to English")))};
+     classwide IBusText *chieng_prop_tooltip_eng={
+@@ -405,7 +409,7 @@ class IBus:Chewing:Engine from IBus:Engi
+ 	    case CHEWING_MODIFIER_SYNC_DISABLE:
+ 		break;
+ 	}
+-	self_refresh_property(self,"chewing_chieng_prop");
++	self_refresh_property(self,"InputMode");
+     }
+ 
+     protected void set_lookup_table_label(self,const gchar *labels){
+@@ -676,19 +680,19 @@ class IBus:Chewing:Engine from IBus:Engi
+ 
+     protected void refresh_property(self,const gchar  *prop_name){
+ 	IBUS_CHEWING_LOG(5,"[I5] refresh_property(%s) status=%x",prop_name, self->_priv->statusFlags);
+-	if (strcmp(prop_name,"chewing_chieng_prop")==0){
++	if (strcmp(prop_name,"InputMode")==0){
+ 	    if (chewing_get_ChiEngMode(self->context)){
+ 		/* Chinese  */
+ 		ibus_property_set_label(self->chieng_prop,SELF_GET_CLASS(self)->chieng_prop_label_chi);
+ 		ibus_property_set_tooltip(self->chieng_prop,SELF_GET_CLASS(self)->chieng_prop_tooltip_chi);
+-#if IBUS_CHECK_VERSION(1, 5, 4)
+-		ibus_property_set_symbol(self->chieng_prop,SELF_GET_CLASS(self)->chieng_prop_label_chi);
++#if IBUS_CHECK_VERSION(1, 5, 0)
++		ibus_property_set_symbol(self->chieng_prop,SELF_GET_CLASS(self)->chieng_prop_symbol_chi);
+ #endif		
+ 	    }else{
+ 		ibus_property_set_label(self->chieng_prop,SELF_GET_CLASS(self)->chieng_prop_label_eng);
+ 		ibus_property_set_tooltip(self->chieng_prop,SELF_GET_CLASS(self)->chieng_prop_tooltip_eng);
+-#if IBUS_CHECK_VERSION(1, 5, 4)
+-		ibus_property_set_symbol(self->chieng_prop,SELF_GET_CLASS(self)->chieng_prop_label_eng);
++#if IBUS_CHECK_VERSION(1, 5, 0)
++		ibus_property_set_symbol(self->chieng_prop,SELF_GET_CLASS(self)->chieng_prop_symbol_eng);
+ #endif
+ 	    }
+ 	    if (self->_priv->statusFlags & ENGINE_STATUS_PROPERTIES_REGISTERED)
+@@ -719,14 +723,14 @@ class IBus:Chewing:Engine from IBus:Engi
+      */
+     public void refresh_property_list(self){
+ 	if (!(self->_priv->statusFlags & ENGINE_STATUS_PROPERTIES_REGISTERED)) {
+-	    self_refresh_property(self,"chewing_chieng_prop");
++	    self_refresh_property(self,"InputMode");
+ 
+ 	    self_refresh_property(self,"chewing_alnumSize_prop");
+ 
+ 	    self_refresh_property(self,"chewing_settings_prop");
+ 
+ 	    ibus_engine_register_properties(IBUS_ENGINE(self),self->prop_list);
+-	    IBUS_ENGINE_GET_CLASS(self)->property_show(IBUS_ENGINE(self),"chewing_chieng_prop");
++	    IBUS_ENGINE_GET_CLASS(self)->property_show(IBUS_ENGINE(self),"InputMode");
+ 	    IBUS_ENGINE_GET_CLASS(self)->property_show(IBUS_ENGINE(self),"chewing_alnumSize_prop");
+ 	    IBUS_ENGINE_GET_CLASS(self)->property_show(IBUS_ENGINE(self),"chewing_settings_prop");
+ 	}
+@@ -740,7 +744,7 @@ class IBus:Chewing:Engine from IBus:Engi
+      * Hide the property list (language bar).
+      */
+     public void hide_property_list(self){
+-	IBUS_ENGINE_GET_CLASS(self)->property_hide(IBUS_ENGINE(self),"chewing_chieng_prop");
++	IBUS_ENGINE_GET_CLASS(self)->property_hide(IBUS_ENGINE(self),"InputMode");
+ 	IBUS_ENGINE_GET_CLASS(self)->property_hide(IBUS_ENGINE(self),"chewing_alnumSize_prop");
+ 	IBUS_ENGINE_GET_CLASS(self)->property_hide(IBUS_ENGINE(self),"chewing_settings_prop");
+     }
+@@ -799,7 +803,7 @@ class IBus:Chewing:Engine from IBus:Engi
+     }
+ 
+     private IBusProperty* get_iBusProperty(self, const gchar *prop_name){
+-	if (strcmp(prop_name,"chewing_chieng_prop")==0){
++	if (strcmp(prop_name,"InputMode")==0){
+ 	    return self->chieng_prop;
+ 	}else if (strcmp(prop_name,"chewing_alnumSize_prop")==0){
+ 	    return self->alnumSize_prop;
+@@ -1139,7 +1143,7 @@ class IBus:Chewing:Engine from IBus:Engi
+ 	Self *self=SELF(engine);
+ 	gboolean needRefresh=TRUE;
+ 
+-        if (strcmp(prop_name,"chewing_chieng_prop")==0){
++        if (strcmp(prop_name,"InputMode")==0){
+ 	    /* Toggle Chinese <-> English */
+ 	    gint isChinese=chewing_get_ChiEngMode(self->context);
+ 	    gint setChinese = (isChinese) ? 0:1;
+diff -up ./src/IBusChewingEngine-input-events.c.rhbz1073797 ./src/IBusChewingEngine-input-events.c
+--- ./src/IBusChewingEngine-input-events.c.rhbz1073797	2014-12-17 15:26:02.857667966 +1000
++++ ./src/IBusChewingEngine-input-events.c	2014-12-17 15:26:02.866667926 +1000
+@@ -41,7 +41,7 @@ gboolean ibus_chewing_engine_process_key
+ 	        chewing_handle_Space(self->context);
+ 	     }
+              chewing_set_ChiEngMode(self->context, ! chewing_get_ChiEngMode(self->context));
+-	     self_refresh_property(self,"chewing_chieng_prop");
++	     self_refresh_property(self,"InputMode");
+ 	     return self_update(self);
+ 	}
+ 	/* Skip release event */
+@@ -166,7 +166,7 @@ gboolean ibus_chewing_engine_process_key
+ 			chewing_handle_Space(self->context);
+ 		    }
+ 		    chewing_handle_Capslock(self->context);
+-		    self_refresh_property(self,"chewing_chieng_prop");
++		    self_refresh_property(self,"InputMode");
+ 		    break;
+ 		case IBUS_Shift_L:
+ 		case IBUS_Shift_R:
+@@ -301,7 +301,7 @@ void ibus_chewing_engine_property_activa
+     IBUS_CHEWING_LOG(3,"[I3] property_activate(-, %s, %u)", prop_name, prop_state);
+     Self *self=SELF(engine);
+     gboolean needRefresh=TRUE;
+-    if (strcmp(prop_name,"chewing_chieng_prop")==0){
++    if (strcmp(prop_name,"InputMode")==0){
+ 	/* Toggle Chinese <-> English */
+ 	chewing_set_ChiEngMode(self->context, !chewing_get_ChiEngMode(self->context));
+     }else if (strcmp(prop_name,"chewing_alnumSize_prop")==0){
